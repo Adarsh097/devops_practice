@@ -149,19 +149,19 @@ Physical Server
 11. docker rmi image-id
 
 # Common Commands:
-1. run         Create and run a new container from an image
-3. exec        Execute a command in a running container
-3. ps          List containers
-4. build       Build an image from a Dockerfile
-5. bake        Build from a file
-6. pull        Download an image from a registry
-7. push        Upload an image to a registry
-8. images      List images
-9. login       Authenticate to a registry
-10. logout      Log out from a registry
-11. search      Search Docker Hub for images
-12. version     Show the Docker version information
-13. info        Display system-wide information
+1. run    -     Create and run a new container from an image
+3. exec    -    Execute a command in a running container
+3. ps      -    List containers
+4. build   -    Build an image from a Dockerfile
+5. bake    -    Build from a file
+6. pull    -    Download an image from a registry
+7. push    -    Upload an image to a registry
+8. images   -   List images
+9. login    -   Authenticate to a registry
+10. logout   -   Log out from a registry
+11. search    -  Search Docker Hub for images
+12. version   -  Show the Docker version information
+13. info     -   Display system-wide information
 
 
 # Add current user to docker group (give it privileges to run docker commands)
