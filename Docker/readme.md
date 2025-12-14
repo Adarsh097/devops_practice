@@ -142,11 +142,12 @@ Physical Server
 4. docker --version
 5. docker --help
 6. docker ps -a (to see all containers)
-7. docker rm container-id/name (to remove the container)
-8. docker stop container-id/name (to stop running container)
+7. docker rm container-id/name -> (to remove the container)
+8. docker stop container-id/name -> (to stop running container)
 9. docker system prune (to remove stopped container, unused volume and networks)
 10. docker logs container-id
 11. docker rmi image-id
+12. docker attach container-id -> (to see the logs in realtime by attaching your terminal with container terminal)
 
 # Common Commands:
 1. run    -     Create and run a new container from an image
@@ -178,6 +179,7 @@ Physical Server
 1. -e = environment
 2. -d = daemon (to run the container in background wihtout blocking the terminal)
 3. -p system_port:container_port
+4. --opt = optional
 
 # Running Jenkins
 1. docker pull jenkins/jenkins
@@ -217,3 +219,79 @@ CMD ["python","manage.py","runserver","0.0.0.0:8002"]
 3. sudo apt install python3-pip (package manager to install django further)
 4. pip install django==3.2 (install django)
 5. django app run on port:8000 by default
+
+--- 
+
+## PART-2
+- FROM python:3.9 (pulling the base image of python)
+- WORKDIR -> mkdir app && cd app (inside container)
+- COPY . . -> copies code from code directly and put in working directory inside the container
+- RUN pip install -r requirements.txt -> during image building commands -> (Building stage)
+- EXPOSE 8001 -> exposing this port in container to run the app
+- CMD ["python", "manage.py", "runserver","0.0.0.0:8001"] -> to start the app after the container starts -> (Running stage)
+
+
+## Docker Volume (transfer,copy,load,persist)
+- In volume, we mount the path inside the conatiner with the path of the system so that data persists even if the container is deleted.
+- when we start the container again then, we have same old data persisted inside the system files.
+ 
+1. docker volume create --name django_todo_volume --opt device=/home/ubuntu/projects/volumes/django_todo_volume --opt o=bind --opt type=none
+2. docker volume create
+3. docker volume ls
+4. docker volume inspect
+5. docker volume rm
+6. docker volume prune
+
+7. docker run -d -p 8001:8001 --mount source=django_todo_volume,target=/app todo-django
+
+
+## Docker Compose
+- If there are multiple container and we have to sync and run all the containers together.
+- This allows us to automate the createion/stopping/removal of containers.
+
+1. docker-compose
+2. sudo apt install docker-compose (if not installed)
+3.  build        – Build or rebuild services
+4.  config       – Validate and view the Compose file
+5.  create       – Create services
+6.  down         – Stop and remove resources -> not the images
+7.  events       – Receive real-time events from containers
+8.  exec         – Execute a command in a running container
+9.  help         – Get help on a command
+10. images       – List images
+11. kill         – Kill containers
+12. logs         – View output from containers
+13. pause        – Pause services
+14. port         – Print the public port for a port binding
+15. ps           – List containers
+16. pull         – Pull service images
+17. push         – Push service images
+18. restart      – Restart services
+19. rm           – Remove stopped containers
+20. run          – Run a one-off command
+21. scale        – Set number of containers for a service
+22. start        – Start services
+23. stop         – Stop services
+24. top          – Display the running processes
+25. unpause      – Unpause services
+26. up           – Create and start containers
+27. version      – Show version information and quit
+
+
+- vim docker-compose.yaml (to specify the services)
+
+```
+version: "3.9"
+services:
+  web:
+    build: .
+    ports:
+      - "8001:8001"
+  db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+```
+- In docker-compose, if we donw the service again and again -> gives WARNING and NOT ERROR. So, this doesn't block the ci/cd pipeline.
