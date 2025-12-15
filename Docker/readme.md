@@ -295,3 +295,95 @@ services:
       MYSQL_ROOT_PASSWORD: "1234"
 ```
 - In docker-compose, if we donw the service again and again -> gives WARNING and NOT ERROR. So, this doesn't block the ci/cd pipeline.
+
+
+## PUSING IMAEGE TO DOCKER HUB
+1. docker login (login to docker hub)
+2. docker image tag node-todo:latest adarsh5559/node-todo:latest (tagging)
+3. docker image push adarsh5559/node-todo:latest (push)
+
+--- 
+
+## Docker swarm
+
+**Docker Swarm** is Docker’s **native container orchestration tool** used to **manage, deploy, and scale containers across multiple machines (nodes)** as a single cluster.
+
+### Simple definition
+
+> **Docker Swarm allows you to run Docker containers on multiple servers, manage them centrally, and ensure high availability and scalability.**
+
+### Key concepts
+
+* **Swarm** → A cluster of Docker nodes
+* **Node** → A machine (VM or physical) running Docker
+* **Manager Node** → Controls the swarm, schedules tasks, maintains state
+* **Worker Node** → Runs the containers assigned by managers
+* **Service** → Definition of how containers should run (image, replicas, ports)
+* **Task** → A single running container instance
+
+### Core features
+
+* **Clustering** – Combines multiple Docker hosts into one logical system
+* **Service orchestration** – Deploy services instead of individual containers
+* **Load balancing** – Automatically distributes traffic across containers
+* **Scaling** – Scale services up/down with a single command
+* **High availability** – Automatically restarts failed containers
+* **Secure by default** – Uses TLS for node communication
+
+### Example
+
+```bash
+docker swarm init
+docker service create --name web --replicas 3 -p 80:80 nginx
+```
+
+This runs **3 replicas of Nginx** across available nodes.
+
+### When to use Docker Swarm
+
+* Simple container orchestration needs
+* Smaller clusters
+* Easier setup compared to Kubernetes
+* Teams already using Docker heavily
+
+### Docker Swarm vs Kubernetes (quick)
+
+| Docker Swarm   | Kubernetes           |
+| -------------- | -------------------- |
+| Easy to set up | Complex but powerful |
+| Fewer features | Enterprise-grade     |
+| Docker-native  | Cloud-native         |
+
+
+## docker is not used in production
+ 1. install docker engine on all the worker nodes.
+
+ - ON MASTER
+ 1. Go to project 
+ 2. docker swarm init
+ 3. docker node ls -> (show swarm nodes)
+ 4. docker service create --name <service name> --replicas 3 --publish 8001:8001 <image>
+ 5. docker service ls -> (show running services)
+ 6. docker service rm <server name>
+ 7. docker info 
+ 8. docker swarm --help
+ 9. docker swarm join-token worker -> (to generate token from manager)
+ 10. docker swarm leave  
+ 11. docker stack deploy -c <deployment yaml file> <stack name>
+ 12. docker service scale <service name>=<replicas>
+ 13. docker service update --image <image> <service name>
+ 14. docker stack rm
+ 15. docker service ls
+ 16. docker service rm
+
+
+ - docker stack deploy ->  does not help in building the image from the Dockerfile. Image has to be pre-created
+
+ - ON WORKER
+ 1. docker swarm join --token SWMTKN-1-0ixjemcpwzj50vyhlti531a3grikkln3k64ins4vlshpy9sgbn-7xthipfkvhro3n60z84czychv 172.31.0.186:2377 -> (to join the swarm) -> (on master enable the port 2377)
+
+
+ - Leader node will create a service to run multiple workers.  
+
+ 1. Docker Compose creates -> BRIDGE NETWORK
+ 2. Docker Swarm creates -> OVERLAY NETWORK
