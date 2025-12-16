@@ -368,7 +368,7 @@ This runs **3 replicas of Nginx** across available nodes.
  7. docker info 
  8. docker swarm --help
  9. docker swarm join-token worker -> (to generate token from manager)
- 10. docker swarm leave  
+ 10. docker swarm leave  -> (to leave the swarm)
  11. docker stack deploy -c <deployment yaml file> <stack name>
  12. docker service scale <service name>=<replicas>
  13. docker service update --image <image> <service name>
@@ -387,3 +387,314 @@ This runs **3 replicas of Nginx** across available nodes.
 
  1. Docker Compose creates -> BRIDGE NETWORK
  2. Docker Swarm creates -> OVERLAY NETWORK
+
+
+ ---
+
+
+ ## PART-3
+
+1. lsof -i :8001 -> (It shows what is running on the port 8001)
+2. sudo docker kill container-id
+3. docker node ls
+4. docker swarm leave (if already join in case of error)
+5. docker swarm join-token worker (to get tokens for the worker)
+
+- docker container is fragile. If anyone gets the container-id he can kill the container and app will stop. So, we create service using docker swarm which auto heals the container if it stops. So, our app will keep functioning properly.
+
+![alt text](image.png) 
+
+- Tasks is basically running the container in worker node.
+- Service defines the Task that needs to be executed on the manager(also run container to utilise resources) and workder node.
+
+- Create 1-master node, 2-worker nodes.
+- Install docker on every node.
+- On Master node: docker swarm init
+- Make the worker node to join the swarm using token. -> (give access to port:2377 on master)
+
+# Task: to run the container on the nodes
+1. docker info 
+- Create service
+2. docker service create --name django-app-service --replicas 3 --publish 8001:8001 adarsh5559/django-todo:latest
+3. docker service ls
+4. docker service rm service-name
+
+- If you kill the container/task it will not make any effect because manager will auto-heal it using the replicas
+- But, if you kill the service on master then, it will stop the apps on all the nodes.
+- Only manager can give information of the swarm.
+- worker can leave the swarm and the resources allocated will be taken.
+- free -h
+
+
+# Making a deployment with multiple services
+1. mkdir deployments
+2. vim django-cluster.yaml
+
+- docker stack is a combination of services used in docker swarm.
+
+```
+root@ip-172-31-5-28:/home/ubuntu/deployment# cat django-cluster.yaml 
+version: '3.7'
+
+services:
+  django-app:
+    image: adarsh5559/django-todo:latest
+    ports:
+      - "8001:8001"
+  mysql-db:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+```
+
+3. docker stack deploy -c django-cluster.yaml django-stack
+4. docker service scale <servie-name>=3
+5. docker service logs <service-name>
+6. docker stack rm <stack-name>
+
+- make changes in app -> update the image -> push it to docker hub -> rollup the change on master
+7. docker service update --image <image name> <service name>
+
+
+
+
+Here are the **most important Docker Swarm commands**, grouped logically and **interview + real-world ready** 👇
+
+---
+
+## 🔹 Swarm Initialization & Node Management
+
+### Initialize Swarm
+
+```bash
+docker swarm init
+```
+
+### Join Swarm (worker / manager)
+
+```bash
+docker swarm join --token <token> <manager-ip>:2377
+```
+
+### Get join tokens
+
+```bash
+docker swarm join-token worker
+docker swarm join-token manager
+```
+
+### Leave Swarm
+
+```bash
+docker swarm leave
+docker swarm leave --force
+```
+
+### List nodes
+
+```bash
+docker node ls
+```
+
+### Inspect node
+
+```bash
+docker node inspect <node-id>
+```
+
+### Promote / Demote node
+
+```bash
+docker node promote <node>
+docker node demote <node>
+```
+
+---
+
+## 🔹 Service Management (MOST IMPORTANT)
+
+### Create service
+
+```bash
+docker service create --name web --replicas 3 -p 80:80 nginx
+```
+
+### List services
+
+```bash
+docker service ls
+```
+
+### Inspect service
+
+```bash
+docker service inspect <service-name>
+```
+
+### View service tasks (containers)
+
+```bash
+docker service ps <service-name>
+```
+
+### Scale service
+
+```bash
+docker service scale web=5
+```
+
+### Update service (image/env)
+
+```bash
+docker service update --image nginx:latest web
+```
+
+### Rollback service
+
+```bash
+docker service rollback web
+```
+
+### Remove service
+
+```bash
+docker service rm <service-name>
+```
+
+---
+
+## 🔹 Stack Management (Docker Compose in Swarm)
+
+### Deploy stack
+
+```bash
+docker stack deploy -c docker-compose.yml my-stack
+```
+
+### List stacks
+
+```bash
+docker stack ls
+```
+
+### List stack services
+
+```bash
+docker stack services my-stack
+```
+
+### List stack tasks
+
+```bash
+docker stack ps my-stack
+```
+
+### Remove stack
+
+```bash
+docker stack rm my-stack
+```
+
+---
+
+## 🔹 Networking
+
+### List networks
+
+```bash
+docker network ls
+```
+
+### Create overlay network
+
+```bash
+docker network create --driver overlay my-network
+```
+
+### Inspect network
+
+```bash
+docker network inspect my-network
+```
+
+---
+
+## 🔹 Secrets & Configs (Production Feature)
+
+### Create secret
+
+```bash
+echo "mypassword" | docker secret create db_password -
+```
+
+### List secrets
+
+```bash
+docker secret ls
+```
+
+### Remove secret
+
+```bash
+docker secret rm db_password
+```
+
+### Create config
+
+```bash
+docker config create app_config config.yml
+```
+
+### List configs
+
+```bash
+docker config ls
+```
+
+---
+
+## 🔹 Logs & Debugging
+
+### Service logs
+
+```bash
+docker service logs web
+```
+
+### Follow logs
+
+```bash
+docker service logs -f web
+```
+
+### Container logs (task level)
+
+```bash
+docker logs <container-id>
+```
+
+---
+
+## 🔹 Cluster Info & Maintenance
+
+### Swarm info
+
+```bash
+docker info
+```
+
+### Drain node (for maintenance)
+
+```bash
+docker node update --availability drain <node>
+```
+
+### Activate node
+
+```bash
+docker node update --availability active <node>
+```
+
+---
