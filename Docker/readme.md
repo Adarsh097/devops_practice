@@ -697,4 +697,697 @@ docker node update --availability drain <node>
 docker node update --availability active <node>
 ```
 
+
+-
 ---
+
+## PART-4
+- docker stop 92 (using the initial of container-id)
+This is was Q/A session only!
+
+
+## What is `nohup`?
+
+`nohup` stands for **“no hang up”**.
+It is a Linux/Unix command used to **run a process in the background so it continues running even after you log out or close the terminal**.
+
+Normally, when you close a terminal, all running processes receive a **SIGHUP (hangup signal)** and stop.
+`nohup` **prevents this signal**, keeping the process alive.
+
+---
+
+## Why is `nohup` useful?
+
+* Run **long-running jobs** (servers, scripts, builds)
+* Keep apps running on **remote servers (EC2, VPS)** after SSH disconnect
+* Avoid using screen/tmux for simple background tasks
+* Capture logs automatically
+
+Common use cases:
+
+* Starting a backend server
+* Running data processing scripts
+* Training ML models
+* Running cron-like scripts manually
+
+---
+
+## Basic Syntax
+
+```bash
+nohup command [arguments] &
+```
+
+* `nohup` → ignore hangup signal
+* `&` → run in background
+
+---
+
+## Simple Example
+
+```bash
+nohup sleep 300 &
+```
+
+* Runs `sleep` for 5 minutes
+* Continues even if you log out
+
+Output:
+
+```text
+[1] 12345
+```
+
+(12345 is the process ID)
+
+---
+
+## Example: Run a Python Script
+
+```bash
+nohup python app.py &
+```
+
+* Script keeps running after logout
+* Output is saved to **`nohup.out`**
+
+Check logs:
+
+```bash
+cat nohup.out
+```
+
+---
+
+## Example: Django / Flask Server
+
+```bash
+nohup python manage.py runserver 0.0.0.0:8000 &
+```
+
+or
+
+```bash
+nohup flask run --host=0.0.0.0 --port=5000 &
+```
+
+---
+
+## Redirect Output (Recommended)
+
+By default, output goes to `nohup.out`.
+You can control it:
+
+```bash
+nohup python app.py > app.log 2>&1 &
+```
+
+Explanation:
+
+* `>` → stdout to `app.log`
+* `2>&1` → stderr to same file
+* `&` → background
+
+---
+
+## Check Running `nohup` Process
+
+```bash
+ps aux | grep app.py
+```
+
+or using PID:
+
+```bash
+ps -p 12345
+```
+
+---
+
+## Stop a `nohup` Process
+
+```bash
+kill 12345
+```
+
+Force kill (if needed):
+
+```bash
+kill -9 12345
+```
+
+---
+
+## Difference: `nohup` vs `&`
+
+| Feature            | `command &` | `nohup command &` |
+| ------------------ | ----------- | ----------------- |
+| Runs in background | ✅           | ✅                 |
+| Survives logout    | ❌           | ✅                 |
+| Handles SIGHUP     | ❌           | ✅                 |
+| Auto log file      | ❌           | ✅ (`nohup.out`)   |
+
+---
+
+## When NOT to Use `nohup`
+
+* When you need session management → use `tmux` or `screen`
+* When you want automatic restarts → use `systemd`, `supervisor`, or Docker
+
+---
+
+## Quick Tip (Very Common)
+
+On servers, this is the **most used pattern**:
+
+```bash
+nohup command > output.log 2>&1 &
+```
+
+---
+
+
+## What is a Multi-Stage Dockerfile?
+
+A **multi-stage Dockerfile** allows you to use **multiple `FROM` statements** in a single Dockerfile.
+Each `FROM` starts a **new build stage**.
+
+👉 The key idea:
+**Use one stage to build/compile the application and another stage to run it**, copying only what is needed into the final image.
+
+This results in:
+
+* ✅ Smaller image size
+* ✅ Better security (no build tools in runtime)
+* ✅ Cleaner, production-ready images
+
+---
+
+## Problem Without Multi-Stage Build
+
+Example (Node.js):
+
+```dockerfile
+FROM node:18
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+### Issues:
+
+* Includes **node_modules**, npm cache, build tools
+* Image size is large
+* Build tools are present in production image
+
+---
+
+## Solution: Multi-Stage Dockerfile
+
+### Basic Structure
+
+```dockerfile
+FROM image1 AS stage1
+# build stuff
+
+FROM image2 AS stage2
+# runtime stuff
+```
+
+Each stage is **isolated**.
+You selectively copy files using:
+
+```dockerfile
+COPY --from=stage1 source destination
+```
+
+---
+
+## Example 1: Node.js App (Build + Runtime)
+
+### Multi-Stage Dockerfile
+
+```dockerfile
+# ---------- Stage 1: Build ----------
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+
+# ---------- Stage 2: Runtime ----------
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+RUN npm install --only=production
+
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
+```
+
+### What happens:
+
+1. **Stage 1**
+
+   * Installs all dependencies
+   * Builds the app
+2. **Stage 2**
+
+   * Copies only built files (`dist`)
+   * Installs only production dependencies
+   * No build tools included
+
+📉 **Image size reduced significantly**
+
+---
+
+## Example 2: Java (Maven + JAR)
+
+### Without Multi-Stage
+
+Image size ~600MB 😞
+
+### With Multi-Stage
+
+```dockerfile
+# ---------- Build Stage ----------
+FROM maven:3.9-eclipse-temurin-17 AS builder
+
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+
+COPY src ./src
+RUN mvn package -DskipTests
+
+
+# ---------- Runtime Stage ----------
+FROM eclipse-temurin:17-jre-alpine
+
+WORKDIR /app
+COPY --from=builder /app/target/app.jar app.jar
+
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
+```
+
+### Benefits:
+
+* Maven & source code **not present** in runtime image
+* Runtime image ~100MB
+
+---
+
+## Example 3: Python (Build Dependencies Removed)
+
+```dockerfile
+# ---------- Build Stage ----------
+FROM python:3.11 AS builder
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps -r requirements.txt
+
+
+# ---------- Runtime Stage ----------
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY --from=builder /app /app
+COPY . .
+
+RUN pip install --no-cache-dir *.whl
+
+CMD ["python", "app.py"]
+```
+
+### Why this is useful:
+
+* Removes compilers (`gcc`, `build-essential`)
+* Smaller & safer image
+
+---
+
+## Target Specific Stage (Optional)
+
+You can build only a specific stage:
+
+```bash
+docker build --target builder -t myapp-builder .
+```
+
+Useful for:
+
+* Debugging
+* CI pipelines
+
+---
+
+## Naming Stages (Best Practice)
+
+```dockerfile
+FROM golang:1.22 AS build
+FROM scratch AS runtime
+```
+
+✔ Improves readability
+✔ Easier maintenance
+
+---
+
+## Common Best Practices
+
+### 1. Use Small Base Images
+
+```dockerfile
+node:alpine
+python:slim
+distroless
+scratch
+```
+
+### 2. Minimize COPY
+
+Copy only what you need into the final stage.
+
+### 3. Cache Dependencies
+
+Copy dependency files before source code.
+
+```dockerfile
+COPY package.json .
+RUN npm install
+COPY . .
+```
+
+---
+
+## Multi-Stage vs Single-Stage
+
+| Feature             | Single Stage | Multi Stage |
+| ------------------- | ------------ | ----------- |
+| Image size          | Large        | Small       |
+| Security            | Lower        | Higher      |
+| Build tools in prod | Yes          | No          |
+| Maintenance         | Harder       | Cleaner     |
+
+---
+
+## When to Use Multi-Stage Builds?
+
+✅ Always use when:
+
+* You compile code (Java, Go, Node, C++)
+* You want production-ready images
+* You care about security & size
+
+❌ Not needed for:
+
+* Simple scripts
+* One-liner containers
+
+---
+
+## One-Line Summary
+
+> **Multi-stage Dockerfiles separate build and runtime environments, producing smaller, cleaner, and more secure Docker images.**
+
+---
+
+
+
+
+
+
+## 1️⃣ Use Smaller Base Images (BIGGEST IMPACT)
+
+### ❌ Bad
+
+```dockerfile
+FROM ubuntu:latest
+```
+
+### ✅ Better
+
+```dockerfile
+FROM node:18-alpine
+```
+
+### ✅ Even Better
+
+```dockerfile
+FROM node:18-slim
+```
+
+### Ultra-minimal (advanced)
+
+```dockerfile
+FROM gcr.io/distroless/nodejs18
+```
+
+| Base Image  | Approx Size |
+| ----------- | ----------- |
+| ubuntu      | ~70MB       |
+| node        | ~900MB      |
+| node:slim   | ~200MB      |
+| node:alpine | ~50MB       |
+| distroless  | ~20MB       |
+
+---
+
+## 2️⃣ Use Multi-Stage Builds (MOST RECOMMENDED)
+
+Remove build tools from the final image.
+
+```dockerfile
+# Build stage
+FROM node:18 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Runtime stage
+FROM node:18-alpine
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY package*.json ./
+RUN npm install --only=production
+
+CMD ["node", "dist/index.js"]
+```
+
+📉 Size drops **2–5× easily**
+
+---
+
+## 3️⃣ Remove Unnecessary Files (`.dockerignore`)
+
+Docker sends **everything** to build context unless ignored.
+
+### Create `.dockerignore`
+
+```dockerignore
+node_modules
+.git
+.gitignore
+Dockerfile
+README.md
+tests
+logs
+.env
+```
+
+💡 This alone can save **hundreds of MBs**
+
+---
+
+## 4️⃣ Reduce Layers (Combine RUN Commands)
+
+### ❌ Bad
+
+```dockerfile
+RUN apt update
+RUN apt install -y curl
+RUN rm -rf /var/lib/apt/lists/*
+```
+
+### ✅ Good
+
+```dockerfile
+RUN apt update \
+ && apt install -y curl \
+ && rm -rf /var/lib/apt/lists/*
+```
+
+---
+
+## 5️⃣ Clean Package Manager Cache
+
+### For Debian/Ubuntu
+
+```dockerfile
+RUN apt-get update \
+ && apt-get install -y python3 \
+ && rm -rf /var/lib/apt/lists/*
+```
+
+### For Alpine
+
+```dockerfile
+RUN apk add --no-cache python3
+```
+
+### For npm
+
+```dockerfile
+RUN npm install --omit=dev
+```
+
+### For pip
+
+```dockerfile
+RUN pip install --no-cache-dir -r requirements.txt
+```
+
+---
+
+## 6️⃣ Install Only Production Dependencies
+
+### Node.js
+
+```dockerfile
+RUN npm install --only=production
+```
+
+or
+
+```dockerfile
+RUN npm ci --omit=dev
+```
+
+### Python
+
+```dockerfile
+RUN pip install --no-cache-dir -r requirements.txt
+```
+
+---
+
+## 7️⃣ Copy Only Required Files
+
+### ❌ Bad
+
+```dockerfile
+COPY . .
+```
+
+### ✅ Good
+
+```dockerfile
+COPY dist ./dist
+COPY package.json .
+```
+
+---
+
+## 8️⃣ Use `--chown` While Copying
+
+Avoid extra layers caused by `chown`.
+
+```dockerfile
+COPY --chown=node:node . /app
+```
+
+---
+
+## 9️⃣ Use `scratch` or `distroless` (Advanced)
+
+### Go Example (Smallest Images)
+
+```dockerfile
+# Build
+FROM golang:1.22 AS builder
+WORKDIR /app
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o app
+
+# Runtime
+FROM scratch
+COPY --from=builder /app/app /
+CMD ["/app"]
+```
+
+📦 Image size: **<10MB**
+
+---
+
+## 🔟 Analyze Image Size
+
+### Check layer sizes
+
+```bash
+docker history myimage
+```
+
+### Dive tool (recommended)
+
+```bash
+docker run --rm -it wagoodman/dive myimage
+```
+
+---
+
+## 1️⃣1️⃣ Remove Unused Images & Cache
+
+```bash
+docker system prune -a
+```
+
+⚠️ Removes unused images & containers
+
+---
+
+## Best Practices Checklist ✅
+
+✔ Use alpine / slim
+✔ Multi-stage builds
+✔ `.dockerignore`
+✔ Clean package cache
+✔ Production dependencies only
+✔ Avoid `COPY . .`
+✔ Analyze with `docker history`
+
+---
+
+## Real Example (Before vs After)
+
+| Version                 | Size   |
+| ----------------------- | ------ |
+| Single-stage Node image | ~1.2GB |
+| Multi-stage + alpine    | ~120MB |
+| Distroless              | ~40MB  |
+
+---
+
+## TL;DR (Interview Answer)
+
+> **Reduce Docker image size by using small base images, multi-stage builds, cleaning package caches, installing only production dependencies, and excluding unnecessary files with `.dockerignore`.**
+
+---
+
