@@ -263,3 +263,82 @@ pipeline {
 }
 
 ```
+
+## PART-2
+
+1. Directly search for groovy syntax cheat sheets.
+
+```
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "adarsh5559/django-todo-react"
+        IMAGE_TAG  = "latest"
+    }
+
+    stages {
+
+        stage('Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/Adarsh097/react_django_demo_app.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh """
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                """
+            }
+        }
+
+        stage('Docker Login & Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerHub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh """
+                    docker-compose down
+                    docker-compose pull
+                    docker-compose up -d
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline executed successfully ✅"
+        }
+        failure {
+            echo "Pipeline failed ❌"
+        }
+    }
+}
+
+```
+
+# Let's understand agents
+
+# Connect master to agent using SSH
+
+- ON MASTER
+
+# copying the key from local to master
+1. scp -i devops-connect.pem devops-connect.pem ubuntu@<MASTER_PUBLIC_IP>:/home/ubuntu/ 
+2. chmod 400  devops-connect.pem
+3. ssh -i devops-connect.pem ubuntu@<WORKER_PRIVATE_IP>
