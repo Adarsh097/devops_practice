@@ -1055,7 +1055,7 @@ Microservices Pods
 5. kubectl get svc -n ingress-nginx 
 6. kubectl get pods -n ingress-nginx 
 7. you have to expose this ingress-controller-svc using port-forwarding.
-8. sudo -E kubectl port-forward svc/ingress-nginx-controller -n ingress-nginx 84:80 --address=0.0.0.0
+8. sudo -E kubectl port-forward svc/ingress-nginx-controller -n ingress-nginx 84:80 --address=0.0.0.0 & ->('&' runs the commands in the background without blocking the terminal)
 9. Expose the port-80 in the security groups.
 10. Upto here ingress-nginx-controller service should work.
 11. Now, we have to attach the app-service to it for redirection.
