@@ -365,3 +365,473 @@ data:
 20.  kubectl apply -f deployment.yml 
 21. Access the pod for mysql
 
+22. We can store the name of db in configmap -> less sensitive data
+
+23. vim configmap.yml
+```
+kind: ConfigMap
+apiVersion: v1
+
+metadata:
+  name: mysql-config-map
+  namespace: mysql
+
+data:
+  database: myDB
+
+
+```
+24. kubectl get cm/configmap -n mysql
+
+```
+kind: Deployment
+apiVersion: apps/v1
+
+metadata: 
+  name: mysq1-dep
+  namespace: mysql
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+
+  template:
+    metadata:
+      name: mysql-pod
+      namespace: mysql
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: 
+                secretKeyRef: 
+                    name: mysql-secret
+                    key: password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: database
+```
+
+25. kubectl apply -f deployment.yml 
+
+26. Go inside the pod ->  kubectl exec -it pod/mysq1-dep-59574dfb65-m55wm -n mysql -- bash 
+27. mysql -u root -p
+28. kubectl rollout restart deployment mysq1-dep -n mysql
+
+
+29. If you delete the pods and deployement then, the data that you have inside the mysql database will also get deleted. So, we use storage classes like persistent-volume.
+
+## Persistent volume claim (PVC) -> to persist the data in database
+![alt text](image-10.png)
+
+30. vim persistent-volume.yml
+31. kubectl get storageclass
+```
+kind: PersistentVolume
+apiVersion: v1
+
+metadata: 
+  name: mysql-pv
+
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 2Gi
+
+  accessModes: 
+    - ReadWriteOnce
+  
+  hostPath:
+    path: /mnt/data
+
+```
+
+32.  kubectl apply -f persistent-volume.yml
+33. kubectl get pv
+34. persistent volume is not pod-based. Persistent volume is like we take storage portion of cluster.
+
+35. Now, we need to create -> vim persistentVolumeClaim.yml -> for the pod to claim the storage in <pv>.
+
+36. PersistentVolume is at cluster level so, requires no namespace.
+37. But, PVC is specific to pod of a namespace.
+
+```
+kind: PersistentVolumeClaim
+apiVersion: v1
+
+metadata:
+  name: mysql-pvc
+  namespace: mysql
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+38.  kubectl apply -f persistentVolumeClaim.yml 
+39.  kubectl get pvc -n mysql -> status will be pending because it has not been attached to pod.
+
+40. vim deployment.yml
+
+```
+ind: Deployment
+apiVersion: apps/v1
+
+metadata: 
+  name: mysq1-dep
+  namespace: mysql
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+
+  template:
+    metadata:
+      name: mysql-pod
+      namespace: mysql
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: 
+                secretKeyRef: 
+                    name: mysql-secret
+                    key: password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: database
+          volumeMounts: 
+            - name: mysql-data
+              mountPath: /var/lib/mysql # inside pod
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc  
+```
+41. kubectl get pvc -n mysql -> STATUS = BOUND (has been claimed by the pods)
+42. kubectl get pv -> STATUS = BOUND (has been claimed by the pods)
+
+43.  kubectl describe  pod/mysq1-dep-8764b8c4b-4m8w8  -n mysql -> see the node where mount has been done
+44. docker exec -it a28f81592d46 bash -> going to worker2 container
+
+45. Now, data inside the pod will be persisted.
+
+Perfect — this is a **core Kubernetes concept**, and your sentence is *almost* right.
+Let me explain it **clearly, correctly, and practically** 👇
+
+---
+
+## 🧠 Short answer (corrected)
+
+> **A PersistentVolume is created at the cluster level, but the actual storage exists on a specific worker node (depending on the volume type). A Pod claims it through a PersistentVolumeClaim (PVC).**
+
+---
+
+## 🔹 Step-by-step: what really happens
+
+### 1️⃣ PersistentVolume (PV)
+
+* Created by **admin** (or dynamically by StorageClass)
+* **Cluster-scoped** (not tied to a namespace)
+* Represents **actual storage**
+
+Example:
+
+* `hostPath` → directory on **one specific worker node**
+* `EBS` → volume attached to **one AZ**
+* `NFS` → shared across nodes
+
+📌 PV itself does **not belong to any Pod**
+
+---
+
+### 2️⃣ PersistentVolumeClaim (PVC)
+
+* Created by **user/app**
+* **Namespace-scoped**
+* Requests storage:
+
+  * size
+  * access mode
+  * storage class
+
+PVC says:
+
+> “I need 2Gi, ReadWriteOnce storage”
+
+---
+
+### 3️⃣ Binding (PV ↔ PVC)
+
+Kubernetes control plane:
+
+* Finds a **matching PV**
+* Binds it to the PVC
+* **1 PV ↔ 1 PVC** (exclusive)
+
+After binding:
+
+```
+PV → Bound
+PVC → Bound
+```
+
+---
+
+### 4️⃣ Pod uses the PVC
+
+The Pod **never talks to the PV directly**.
+
+```yaml
+volumes:
+  - name: mysql-data
+    persistentVolumeClaim:
+      claimName: mysql-pvc
+```
+
+---
+
+## 🔥 The CRUCIAL part (your confusion point)
+
+### ❓ “PV is created on any worker node”
+
+👉 **Depends on volume type**
+
+| Volume Type | Where data lives           |
+| ----------- | -------------------------- |
+| `hostPath`  | ❌ ONE specific worker node |
+| `EBS`       | ❌ One AZ                   |
+| `NFS`       | ✅ Shared                   |
+| `CephFS`    | ✅ Shared                   |
+
+So with **hostPath**:
+
+* Pod **must run on the same node**
+* Otherwise → volume mount fails
+
+Kubernetes handles this by **node affinity** behind the scenes.
+
+---
+
+## 🧪 Example flow (MySQL case)
+
+1. PV created with `hostPath: /mnt/data` on `worker-node-1`
+2. PVC created → binds to that PV
+3. Pod using PVC:
+
+   * Scheduler places pod **only on worker-node-1**
+4. MySQL writes data → `/mnt/data` on that node
+
+---
+
+## ⚠️ Why hostPath is dangerous
+
+* Node crash = 💥 data gone
+* Pod reschedule to another node = ❌ won’t start
+* No replication
+
+✔️ OK for learning
+❌ Not for production
+
+---
+
+## ✅ Production-grade setup (recommended)
+
+For AWS:
+
+```
+PVC → StorageClass → EBS CSI → Volume
+```
+
+Benefits:
+
+* Automatic volume provisioning
+* Safe pod restarts
+* Clean lifecycle
+
+---
+
+## 🎯 One-line summary (interview-ready)
+
+> **PersistentVolume is cluster-scoped storage; PersistentVolumeClaim is a request for that storage; Pods consume PVCs, and actual storage location depends on the volume type.**
+
+---
+
+
+
+Great question — this comes up **all the time** in Kubernetes, debugging, and interviews 👍
+Let’s lock it in clearly.
+
+---
+
+## 🧠 Core difference (one-liner)
+
+> **Events tell you *what happened* in the system; logs tell you *what the application said* while running.**
+
+---
+
+## 🔍 Side-by-side comparison
+
+| Aspect         | **Events**                                             | **Logs**                 |
+| -------------- | ------------------------------------------------------ | ------------------------ |
+| Purpose        | Lifecycle & system actions                             | Application behavior     |
+| Generated by   | Kubernetes components (scheduler, kubelet, controller) | App / container          |
+| Scope          | Cluster / Pod / Node                                   | Container / Process      |
+| Persistence    | ❌ Temporary (auto-expire)                              | ✅ Persistent (if stored) |
+| Used for       | *Why didn’t it start?*                                 | *What did my app do?*    |
+| Access command | `kubectl describe` / `kubectl get events`              | `kubectl logs`           |
+
+---
+
+## 📌 Events (Kubernetes-focused)
+
+### What events show
+
+* Pod scheduled
+* Image pulled
+* Container started/stopped
+* OOMKilled
+* CrashLoopBackOff
+* Failed mounts
+* Liveness probe failures
+
+### Example
+
+```bash
+kubectl describe pod mysql-pod
+```
+
+Output snippet:
+
+```
+Events:
+  Type     Reason     Message
+  ----     ------     -------
+  Warning  OOMKilled  Container killed due to memory limit
+```
+
+📌 **Events answer**:
+👉 *Why did Kubernetes take an action?*
+
+---
+
+### View all events
+
+```bash
+kubectl get events --sort-by=.metadata.creationTimestamp
+```
+
+---
+
+## 📌 Logs (Application-focused)
+
+### What logs show
+
+* App startup messages
+* Errors/exceptions
+* Query logs
+* Request logs
+* Debug output
+
+### Example
+
+```bash
+kubectl logs mysql-pod
+```
+
+Output:
+
+```
+InnoDB: Buffer pool initialized
+ERROR: Access denied for user 'root'
+```
+
+📌 **Logs answer**:
+👉 *What did my application do internally?*
+
+---
+
+## 🔥 When to check WHAT (real-world flow)
+
+### Pod not starting?
+
+👉 **Events first**
+
+```bash
+kubectl describe pod
+```
+
+### App running but broken?
+
+👉 **Logs**
+
+```bash
+kubectl logs pod-name
+```
+
+### Pod keeps restarting?
+
+👉 **Events + previous logs**
+
+```bash
+kubectl logs pod-name --previous
+```
+
+---
+
+## 🚨 Key gotchas (important)
+
+### ❗ Events are NOT logs
+
+* Events disappear after some time
+* Don’t rely on them for audits
+
+### ❗ Logs are per container
+
+```bash
+kubectl logs pod -c container-name
+```
+
+---
+
+## 🧠 Interview-perfect answer
+
+> **Events explain Kubernetes decisions and lifecycle changes, while logs explain application execution and behavior. Events are short-lived system signals; logs are continuous application output.**
+
+---
+
+## 🛠 Production best practice
+
+* Events → debugging & alerting
+* Logs → central logging (ELK, Loki, CloudWatch)
+
+---
+
+
+
+## Horizontal Pod AutoScaler | HPA
