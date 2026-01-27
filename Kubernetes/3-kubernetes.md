@@ -834,4 +834,39 @@ kubectl logs pod -c container-name
 
 
 
+
+- kubectl delete -f namespace.yml 
+- when you delete the namespace then, all the things that are associated under that namespace will also get deleted.
+
+
 ## Horizontal Pod AutoScaler | HPA
+
+1. We will attach HPA to the deployment -> to auto scale the number of pods as the traffic increases on a particular service.
+2. min:1 or max:10 -> configuration(HPA)
+3. This is decided on the basis of the CPU consumption by the pod. 
+4. If the CPU consumption spikes on the pod then, HPA will the scale up the number of pods.
+
+5. kubectl top pod -> which pod is taking maximum cpu.
+6. kubectl top node -> which node is taking maximum cpu.
+
+7. For this, we require to install the metrics-server api.
+8. <kubestarter repo> kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+9.Edit the Metrics Server Deployment -> kubectl -n kube-system edit deployment metrics-server
+
+10. Add the security bypass to deployment under container.args
+
+```
+- --kubelet-insecure-tls # because kubectl communicates with workder nodes using http
+- --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
+
+```
+
+11. Restart the deployment
+
+```
+kubectl -n kube-system rollout restart deployment metrics-server
+
+```
+# 2:08
+12. 
