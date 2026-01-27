@@ -360,9 +360,8 @@ data:
 15. echo -n "Admin" | base64
 16. kubectl apply -f secrets.yml
 17. kubectl get secret -n mysql
-18. > fileName -> to clear the content of file
+18. '>' fileName -> to clear the content of file
 19. kubectl delete -f deployment.yml 
 20.  kubectl apply -f deployment.yml 
 21. Access the pod for mysql
 
-57:00
