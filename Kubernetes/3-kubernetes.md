@@ -868,5 +868,79 @@ kubectl logs pod -c container-name
 kubectl -n kube-system rollout restart deployment metrics-server
 
 ```
-# 2:08
-12. 
+
+12. Check if metrics server is running
+```
+kubectl get pods -n kube-system
+kubectl top nodes
+
+```
+13. To login docker-hub
+
+
+
+14. vim hpa.yml
+
+```
+kind: HorizontalPodAutoscaler
+apiVersion: autoscaling/v2
+
+metadata: 
+  name: online-shop-hpa
+  namespace: online-shop-ns
+
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    apiVersion: apps/v1
+    name: online-shop-deployment
+  
+  minReplicas: 1
+  maxReplicas: 5
+
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 2
+
+```
+
+15. kubectl apply -f hpa.yml
+
+```
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+    name: online-shop-deployment
+    namespace: online-shop-ns
+    labels:
+        app: online-shop
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: online-shop
+    template:
+        metadata:
+            name:  online-shop-pod
+            namespace: online-shop-ns
+            labels:
+                app: online-shop
+        spec:
+            containers:
+            - name: online-shop-container
+              image: adarsh5559/online_shop_app:latest
+              ports:
+                - containerPort: 80
+              resources:
+                requests:
+                  cpu: 100m # min 10% cpu
+                  memory: 256Mi
+                limits:
+                  cpu: 200m
+                  memory: 512Mi
+```
