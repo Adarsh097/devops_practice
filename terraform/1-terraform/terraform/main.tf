@@ -64,6 +64,8 @@ resource "aws_instance" "ec2-myInstance-1" {
   ami             = var.ec2_ami_id
   instance_type   = var.aws_instance_type
   key_name        = aws_key_pair.my_key.key_name
+  vpc_security_group_ids = [aws_security_group.my_security_group.id]
+
   security_groups = [aws_security_group.my_security_group.name]
 
 
