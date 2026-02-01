@@ -5,7 +5,8 @@
 *.tfstate
 *.tfstate.*
 
-
+terraform.tfstate-backup
+terraform.tfstate
 
 # Variable files (may contain secrets)
 *.tfvars

@@ -77,6 +77,7 @@ resource "aws_instance" "ec2-myInstance-1" {
   tags = {
     Name         = each.key
     Organization = "Terraform"
+    Environment  = var.env
   }
 
 }
