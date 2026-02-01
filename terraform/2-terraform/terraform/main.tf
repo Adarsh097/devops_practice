@@ -55,7 +55,7 @@ resource "aws_security_group" "my_security_group" {
 
 resource "aws_instance" "ec2-myInstance-1" {
   for_each = tomap({
-    "TWS-Junoon-automate-micro" = "t3.micro",
+    "TWS-Junoon-automate-micro" = var.env == "dev" ? "t3.micro" : "t3.small",
     "TWS-Junoon-automate-small" = "t3.small"
   })
   ami = var.ec2_ami_id
