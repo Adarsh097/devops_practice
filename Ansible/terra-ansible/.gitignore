@@ -1,0 +1,27 @@
+# Local .terraform directories
+.terraform/
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+
+
+# Variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+
+
+# Terraform plan output
+*.tfplan
+
+# Sensitive files
+*.pem
+*.key
+
+
+# Environment variable files
+.env
+
+terra-key-ec2-ansible
+terra-key-ec2-ansible.pub

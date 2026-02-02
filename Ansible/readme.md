@@ -1,0 +1,418 @@
+## Ansible In One Shot 
+
+![alt text](image.png)
+
+![alt text](image-1.png)
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
+
+
+---
+
+# 🔧 What is Ansible?
+
+**Ansible** is an **agentless configuration management, automation, and orchestration tool** used to:
+
+* Configure servers (install packages, manage files, users, services)
+* Automate repetitive IT tasks
+* Orchestrate complex workflows (multi-tier deployments, rolling updates)
+* Manage infrastructure at scale
+
+👉 It follows **Infrastructure as Code (IaC)** principles.
+
+### Simple definition:
+
+> *Ansible lets you describe the desired state of your systems in YAML, and it makes reality match that state.*
+
+---
+
+# 🧠 Why Ansible Exists (The Problem It Solves)
+
+Before tools like Ansible:
+
+* Manual SSH into servers ❌
+* Bash scripts that break easily ❌
+* Snowflake servers (no consistency) ❌
+* Hard to scale ❌
+
+Ansible solves:
+
+* **Consistency** → same config everywhere
+* **Idempotency** → safe to run multiple times
+* **Scalability** → manage thousands of nodes
+* **Human-readable automation** → YAML
+
+---
+
+# ⭐ Key Features of Ansible
+
+| Feature     | Explanation                        |
+| ----------- | ---------------------------------- |
+| Agentless   | No agent needed on target machines |
+| Uses SSH    | Works out of the box               |
+| Idempotent  | Safe re-runs                       |
+| Declarative | Define *what*, not *how*           |
+| YAML-based  | Easy to read & write               |
+| Modular     | Thousands of built-in modules      |
+| Push-based  | Control node pushes configs        |
+
+---
+
+# 🏗️ Ansible Architecture (Very Important)
+
+![Image](https://miro.medium.com/0%2AUUE-khFeEwuKC_VM)
+
+![Image](https://miro.medium.com/v2/da%3Atrue/resize%3Afit%3A1200/0%2AsMSfIbPO8mH299to)
+
+![Image](https://media2.dev.to/dynamic/image/width%3D800%2Cheight%3D%2Cfit%3Dscale-down%2Cgravity%3Dauto%2Cformat%3Dauto/https%3A%2F%2Fdev-to-uploads.s3.amazonaws.com%2Fuploads%2Farticles%2Fuelao5zg707nhcq6130m.jpg)
+
+### 1️⃣ Control Node
+
+* Machine where Ansible is installed
+* Runs playbooks
+* Python required
+
+### 2️⃣ Managed Nodes
+
+* Target machines
+* Only requirement: **Python + SSH**
+* No Ansible agent needed
+
+### 3️⃣ Inventory
+
+* List of managed nodes
+* Can be static or dynamic
+
+### 4️⃣ Modules
+
+* Units of work (yum, apt, copy, service, user, file, etc.)
+
+### 5️⃣ Playbooks
+
+* YAML files describing tasks to execute
+
+---
+
+# 📦 Inventory (Static & Dynamic)
+
+### Static Inventory
+
+```ini
+[web]
+10.0.0.1
+10.0.0.2
+
+[db]
+10.0.0.3
+```
+
+### Inventory with Variables
+
+```ini
+[web]
+server1 ansible_host=10.0.0.1 ansible_user=ubuntu
+```
+
+### Dynamic Inventory
+
+Used in **cloud environments** (AWS, Azure, GCP):
+
+* Auto-fetch instances using APIs
+* Example: EC2 dynamic inventory plugin
+
+---
+
+# 📜 Playbooks (Heart of Ansible)
+
+A **playbook** = one or more **plays**
+Each **play**:
+
+* Targets hosts
+* Executes tasks
+
+### Example Playbook
+
+```yaml
+- name: Configure web server
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+```
+
+---
+
+# 🔄 Idempotency (VERY IMPORTANT)
+
+Idempotency means:
+
+> Running the same playbook multiple times gives the **same result**.
+
+Example:
+
+* Package already installed → no change
+* Service already running → no restart
+
+This is **huge** for reliability.
+
+---
+
+# 🔌 Ansible Modules (Deep Dive)
+
+Modules are **pre-written scripts** that do actual work.
+
+### Common Modules
+
+| Category   | Examples             |
+| ---------- | -------------------- |
+| Package    | apt, yum, dnf        |
+| Files      | copy, template, file |
+| Services   | service, systemd     |
+| Users      | user, group          |
+| Networking | nmcli                |
+| Cloud      | ec2, s3, iam         |
+| Containers | docker_container     |
+| K8s        | kubernetes.core.k8s  |
+
+### Example: Copy File
+
+```yaml
+- name: Copy config
+  copy:
+    src: app.conf
+    dest: /etc/app.conf
+    owner: root
+    mode: '0644'
+```
+
+---
+
+# 🧩 Roles (Production-Grade Ansible)
+
+Roles help **structure large projects**.
+
+### Role Structure
+
+```text
+roles/
+ └── nginx/
+     ├── tasks/main.yml
+     ├── handlers/main.yml
+     ├── templates/
+     ├── files/
+     ├── vars/main.yml
+     ├── defaults/main.yml
+```
+
+### Use Role in Playbook
+
+```yaml
+- hosts: web
+  roles:
+    - nginx
+```
+
+---
+
+# 🔔 Handlers (Event-Driven Tasks)
+
+Handlers run **only when notified**.
+
+```yaml
+tasks:
+  - name: Update nginx config
+    template:
+      src: nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+    notify: restart nginx
+
+handlers:
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+```
+
+---
+
+# 🔐 Variables & Facts
+
+### Variables
+
+```yaml
+nginx_port: 80
+```
+
+### Facts (Auto Collected)
+
+```yaml
+ansible_os_family
+ansible_hostname
+ansible_ip_addresses
+```
+
+Used like:
+
+```yaml
+when: ansible_os_family == "Debian"
+```
+
+---
+
+# 🧠 Conditionals & Loops
+
+### Condition
+
+```yaml
+when: ansible_facts['os_family'] == 'RedHat'
+```
+
+### Loop
+
+```yaml
+- name: Install packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - git
+    - curl
+    - wget
+```
+
+---
+
+# 🔒 Ansible Vault (Secrets Management)
+
+Encrypt sensitive data:
+
+```bash
+ansible-vault encrypt secrets.yml
+```
+
+Use in playbook:
+
+```yaml
+vars_files:
+  - secrets.yml
+```
+
+---
+
+# 🚀 Ansible vs Terraform (Interview Gold)
+
+| Ansible                  | Terraform                   |
+| ------------------------ | --------------------------- |
+| Config management        | Infrastructure provisioning |
+| Procedural + declarative | Declarative                 |
+| SSH-based                | API-based                   |
+| Mutable infra            | Immutable infra             |
+| Best for OS/app          | Best for cloud resources    |
+
+👉 **Real world:**
+Terraform → create infra
+Ansible → configure infra
+
+---
+
+# ⚠️ Common Ansible Mistakes
+
+❌ Using `shell` instead of modules
+❌ No roles → messy playbooks
+❌ Hardcoding values
+❌ No idempotency
+❌ No vault for secrets
+
+---
+
+# 🧪 Real-World Use Cases
+
+* Server hardening
+* App deployments
+* Zero-downtime rolling updates
+* Kubernetes node setup
+* CI/CD automation
+* Multi-cloud config
+
+---
+
+# 🎯 How Ansible Fits Your Profile
+
+Given your hands-on with:
+
+* **Docker**
+* **Kubernetes**
+* **Terraform**
+* **Linux scripting**
+
+👉 Ansible becomes your **configuration + orchestration glue**
+Perfect for **DevOps SDE-1 / Platform roles**.
+
+---
+
+# 🔥 Interview Questions (with Quick Answers)
+
+**Q: Why is Ansible agentless?**
+A: Uses SSH & Python, reducing overhead.
+
+**Q: What is idempotency?**
+A: Same result on multiple runs.
+
+**Q: Playbook vs Role?**
+A: Playbook = workflow, Role = reusable component.
+
+**Q: When to use Ansible vs Shell scripts?**
+A: Ansible for scalable, repeatable automation.
+
+---
+
+
+# How?
+![alt text](image-4.png)
+
+1. Setup 3-nodes using terraform
+2. ssh-keygen -> to generate private and public key-pair to be used for the nodes.
+3. public-key goes to the ec2-nodes.
+
+![alt text](image-5.png)
+
+![alt text](image-6.png)
+
+
+4. using ssh, login to the master node.
+```
+ssh -i terra-key-ec2-ansible ubuntu@ec2-13-235-75-89.ap-south-1.compute.amazonaws.com
+
+```
+5. It is not mandatory that the private key should end with .pem.
+
+
+# On Master Node
+
+# Installing Ansible on Ubuntu (Official Site)
+- Ubuntu provides Ansible packages through a Personal Package Archive (PPA) that contains more recent versions than the standard repositories.
+
+- Ubuntu builds are available in a PPA here.
+
+- Configure the PPA on your system and install Ansible:
+
+```
+1. sudo apt update
+2.  sudo apt install software-properties-common
+3. sudo add-apt-repository --yes --update ppa:ansible/ansible
+4. sudo apt install ansible
+5. ansible --version
+
+```
