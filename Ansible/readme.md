@@ -415,4 +415,183 @@ ssh -i terra-key-ec2-ansible ubuntu@ec2-13-235-75-89.ap-south-1.compute.amazonaw
 4. sudo apt install ansible
 5. ansible --version
 
+6. executable location = /usr/bin/ansible
+7.  config file = /etc/ansible/ansible.cfg
+
+8. host file = /etc/ansible/host
 ```
+
+6. Ansible Master has a host file in which information of all the nodes (private ip, Private key, user to login as)
+
+7. [group of ip addresses]
+
+8. vim hosts -> adding named group -> group of nodes in master
+9. Use <public ip-address> for the workers.
+10. sudo chmod 666 hosts
+
+```
+
+[ad_servers]
+server1  ansible_host=3.110.45.7
+server2  ansible_host=65.2.83.228
+server3  ansible_host=3.110.175.87
+
+server1 ansible_user=ubuntu # ssh connect dns-info
+server2 ansible_user=ec2-user
+server3 ansible_user=ec2-user
+
+
+# common variables -> can't use hyphens in name
+
+[ad_servers:vars]
+ansible_python_interpreter=usr/bin/python3 #ansible -v
+ansible_ssh_private_key_file=/home/ubuntu/keys/private_access_key.pem
+
+```
+11. copy the private-key to master so, that master can access the workers that have public-key by default using terraform.
+
+12. ansible-inventory --list
+
+```
+{
+    "_meta": {
+        "hostvars": {
+            "server1": {
+                "ansible_host": "3.110.45.7",
+                "ansible_python_interpreter": "usr/bin/python3 #ansible -v",
+                "ansible_ssh_private_key_file": "/home/ubuntu/keys/private_access_key.pem",
+                "ansible_user": "ubuntu"
+            },
+            "server2": {
+                "ansible_host": "65.2.83.228",
+                "ansible_python_interpreter": "usr/bin/python3 #ansible -v",
+                "ansible_ssh_private_key_file": "/home/ubuntu/keys/private_access_key.pem",
+                "ansible_user": "ec2-user"
+            },
+            "server3": {
+                "ansible_host": "3.110.175.87",
+                "ansible_python_interpreter": "usr/bin/python3 #ansible -v",
+                "ansible_ssh_private_key_file": "/home/ubuntu/keys/private_access_key.pem",
+                "ansible_user": "ec2-user"
+            }
+        }
+    },
+    "ad_servers": {
+        "hosts": [
+            "server1",
+            "server2",
+            "server3"
+        ]
+    },
+    "all": {
+        "children": [
+            "ungrouped",
+            "ad_servers"
+        ]
+    }
+}
+
+```
+
+
+Here’s a **clear + brief** explanation 👇
+
+---
+
+## 🖥️ Hosts File (Ansible)
+
+**What it is:**
+The **hosts file** is where you list the **target machines (managed nodes)** that Ansible will connect to.
+
+**Purpose:**
+👉 Tells Ansible *which servers to manage*
+
+**Example:**
+
+```ini
+[web]
+10.0.0.1
+10.0.0.2
+
+[db]
+10.0.0.3
+```
+
+**Key points:**
+
+* Can contain **IP / hostname**
+* Can have **groups** (web, db, prod, dev)
+* Often called `hosts` or `inventory`
+
+---
+
+## 📦 Inventory File (Ansible)
+
+**What it is:**
+The **inventory file** is a **broader concept** that includes:
+
+* Hosts
+* Groups
+* Variables (host/group level)
+* Connection details
+
+**Purpose:**
+👉 Defines *who to manage* **and** *how to manage them*
+
+**Example:**
+
+```ini
+[web]
+web1 ansible_host=10.0.0.1 ansible_user=ubuntu
+
+[db]
+db1 ansible_host=10.0.0.3 ansible_user=ubuntu
+```
+
+---
+
+## 🔍 Difference in One Table
+
+| Hosts File        | Inventory File             |
+| ----------------- | -------------------------- |
+| List of machines  | Hosts + groups + variables |
+| Simple            | More detailed              |
+| Basic targeting   | Full connection config     |
+| Part of inventory | Inventory itself           |
+
+👉 **In practice:**
+✔ *Hosts file is a type of inventory file*
+
+---
+
+## 🎯 Interview One-Liner
+
+> **Inventory defines the infrastructure; hosts are the machines inside it.**
+
+
+
+## Adhoc Commands and Modules
+1. ansible ad_servers -m ping -> (sending this module to all hosts inside ad_servers group)
+
+2. First give -> chmod 400 private_access_key
+![alt text](image-7.png)
+3. don't use comments in command line of host file.
+
+
+4. ansilbe server1 -m ping
+
+5. Running adhoc command to see free RAM: ansible server3 -a "free -h"
+6. Free disk space -> ansible ad_servers -a "df -h"
+
+7. updating server -> ansible server1 -a "sudo apt-get update"
+
+8. Installing nginx -> ansible server1 -a "sudo apt-get install nginx -y" -> ubuntu
+
+9. Installing httpd -> ansible server2 -a "sudo dnf install httpd -y" -> Amazon, RedHat
+
+
+10. Why apache not running? -> ansible server2 -a "sudo systemctl status httpd"
+11.  Activate -> ansible server2 -a "sudo systemctl start httpd"
+12. Same for the server3 as server2.
+
+13. ansible all -m ping -> pinging all servers (grouped and ungrouped also)
