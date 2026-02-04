@@ -848,3 +848,7 @@ ansible_ssh_private_key_file=/home/ubuntu/keys/private_access_key.pem
 
 ------ 
 ```
+
+5. explore ansible galaxy docker
+
+
