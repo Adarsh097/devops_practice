@@ -1,1 +1,2 @@
 Ansible/terra-ansible/.terraform.lock.hcl
+terraform/2-terraform/remote-infra/terraform.tfstate

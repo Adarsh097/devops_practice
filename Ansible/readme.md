@@ -1,4 +1,4 @@
-## Ansible In One Shot 
+## Ansible In One Shot
 
 ![alt text](image.png)
 
@@ -8,23 +8,22 @@
 
 ![alt text](image-3.png)
 
-
 ---
 
 # 🔧 What is Ansible?
 
 **Ansible** is an **agentless configuration management, automation, and orchestration tool** used to:
 
-* Configure servers (install packages, manage files, users, services)
-* Automate repetitive IT tasks
-* Orchestrate complex workflows (multi-tier deployments, rolling updates)
-* Manage infrastructure at scale
+- Configure servers (install packages, manage files, users, services)
+- Automate repetitive IT tasks
+- Orchestrate complex workflows (multi-tier deployments, rolling updates)
+- Manage infrastructure at scale
 
 👉 It follows **Infrastructure as Code (IaC)** principles.
 
 ### Simple definition:
 
-> *Ansible lets you describe the desired state of your systems in YAML, and it makes reality match that state.*
+> _Ansible lets you describe the desired state of your systems in YAML, and it makes reality match that state._
 
 ---
 
@@ -32,17 +31,17 @@
 
 Before tools like Ansible:
 
-* Manual SSH into servers ❌
-* Bash scripts that break easily ❌
-* Snowflake servers (no consistency) ❌
-* Hard to scale ❌
+- Manual SSH into servers ❌
+- Bash scripts that break easily ❌
+- Snowflake servers (no consistency) ❌
+- Hard to scale ❌
 
 Ansible solves:
 
-* **Consistency** → same config everywhere
-* **Idempotency** → safe to run multiple times
-* **Scalability** → manage thousands of nodes
-* **Human-readable automation** → YAML
+- **Consistency** → same config everywhere
+- **Idempotency** → safe to run multiple times
+- **Scalability** → manage thousands of nodes
+- **Human-readable automation** → YAML
 
 ---
 
@@ -53,7 +52,7 @@ Ansible solves:
 | Agentless   | No agent needed on target machines |
 | Uses SSH    | Works out of the box               |
 | Idempotent  | Safe re-runs                       |
-| Declarative | Define *what*, not *how*           |
+| Declarative | Define _what_, not _how_           |
 | YAML-based  | Easy to read & write               |
 | Modular     | Thousands of built-in modules      |
 | Push-based  | Control node pushes configs        |
@@ -70,28 +69,28 @@ Ansible solves:
 
 ### 1️⃣ Control Node
 
-* Machine where Ansible is installed
-* Runs playbooks
-* Python required
+- Machine where Ansible is installed
+- Runs playbooks
+- Python required
 
 ### 2️⃣ Managed Nodes
 
-* Target machines
-* Only requirement: **Python + SSH**
-* No Ansible agent needed
+- Target machines
+- Only requirement: **Python + SSH**
+- No Ansible agent needed
 
 ### 3️⃣ Inventory
 
-* List of managed nodes
-* Can be static or dynamic
+- List of managed nodes
+- Can be static or dynamic
 
 ### 4️⃣ Modules
 
-* Units of work (yum, apt, copy, service, user, file, etc.)
+- Units of work (yum, apt, copy, service, user, file, etc.)
 
 ### 5️⃣ Playbooks
 
-* YAML files describing tasks to execute
+- YAML files describing tasks to execute
 
 ---
 
@@ -119,8 +118,8 @@ server1 ansible_host=10.0.0.1 ansible_user=ubuntu
 
 Used in **cloud environments** (AWS, Azure, GCP):
 
-* Auto-fetch instances using APIs
-* Example: EC2 dynamic inventory plugin
+- Auto-fetch instances using APIs
+- Example: EC2 dynamic inventory plugin
 
 ---
 
@@ -129,8 +128,8 @@ Used in **cloud environments** (AWS, Azure, GCP):
 A **playbook** = one or more **plays**
 Each **play**:
 
-* Targets hosts
-* Executes tasks
+- Targets hosts
+- Executes tasks
 
 ### Example Playbook
 
@@ -162,8 +161,8 @@ Idempotency means:
 
 Example:
 
-* Package already installed → no change
-* Service already running → no restart
+- Package already installed → no change
+- Service already running → no restart
 
 This is **huge** for reliability.
 
@@ -194,7 +193,7 @@ Modules are **pre-written scripts** that do actual work.
     src: app.conf
     dest: /etc/app.conf
     owner: root
-    mode: '0644'
+    mode: "0644"
 ```
 
 ---
@@ -339,12 +338,12 @@ Ansible → configure infra
 
 # 🧪 Real-World Use Cases
 
-* Server hardening
-* App deployments
-* Zero-downtime rolling updates
-* Kubernetes node setup
-* CI/CD automation
-* Multi-cloud config
+- Server hardening
+- App deployments
+- Zero-downtime rolling updates
+- Kubernetes node setup
+- CI/CD automation
+- Multi-cloud config
 
 ---
 
@@ -352,10 +351,10 @@ Ansible → configure infra
 
 Given your hands-on with:
 
-* **Docker**
-* **Kubernetes**
-* **Terraform**
-* **Linux scripting**
+- **Docker**
+- **Kubernetes**
+- **Terraform**
+- **Linux scripting**
 
 👉 Ansible becomes your **configuration + orchestration glue**
 Perfect for **DevOps SDE-1 / Platform roles**.
@@ -378,8 +377,8 @@ A: Ansible for scalable, repeatable automation.
 
 ---
 
-
 # How?
+
 ![alt text](image-4.png)
 
 1. Setup 3-nodes using terraform
@@ -390,18 +389,19 @@ A: Ansible for scalable, repeatable automation.
 
 ![alt text](image-6.png)
 
-
 4. using ssh, login to the master node.
+
 ```
 ssh -i terra-key-ec2-ansible ubuntu@ec2-13-235-75-89.ap-south-1.compute.amazonaws.com
 
 ```
-5. It is not mandatory that the private key should end with .pem.
 
+5. It is not mandatory that the private key should end with .pem.
 
 # On Master Node
 
 # Installing Ansible on Ubuntu (Official Site)
+
 - Ubuntu provides Ansible packages through a Personal Package Archive (PPA) that contains more recent versions than the standard repositories.
 
 - Ubuntu builds are available in a PPA here.
@@ -448,6 +448,7 @@ ansible_python_interpreter=usr/bin/python3 #ansible -v
 ansible_ssh_private_key_file=/home/ubuntu/keys/private_access_key.pem
 
 ```
+
 11. copy the private-key to master so, that master can access the workers that have public-key by default using terraform.
 
 12. ansible-inventory --list
@@ -493,7 +494,6 @@ ansible_ssh_private_key_file=/home/ubuntu/keys/private_access_key.pem
 
 ```
 
-
 Here’s a **clear + brief** explanation 👇
 
 ---
@@ -504,7 +504,7 @@ Here’s a **clear + brief** explanation 👇
 The **hosts file** is where you list the **target machines (managed nodes)** that Ansible will connect to.
 
 **Purpose:**
-👉 Tells Ansible *which servers to manage*
+👉 Tells Ansible _which servers to manage_
 
 **Example:**
 
@@ -519,9 +519,9 @@ The **hosts file** is where you list the **target machines (managed nodes)** tha
 
 **Key points:**
 
-* Can contain **IP / hostname**
-* Can have **groups** (web, db, prod, dev)
-* Often called `hosts` or `inventory`
+- Can contain **IP / hostname**
+- Can have **groups** (web, db, prod, dev)
+- Often called `hosts` or `inventory`
 
 ---
 
@@ -530,13 +530,13 @@ The **hosts file** is where you list the **target machines (managed nodes)** tha
 **What it is:**
 The **inventory file** is a **broader concept** that includes:
 
-* Hosts
-* Groups
-* Variables (host/group level)
-* Connection details
+- Hosts
+- Groups
+- Variables (host/group level)
+- Connection details
 
 **Purpose:**
-👉 Defines *who to manage* **and** *how to manage them*
+👉 Defines _who to manage_ **and** _how to manage them_
 
 **Example:**
 
@@ -560,7 +560,7 @@ db1 ansible_host=10.0.0.3 ansible_user=ubuntu
 | Part of inventory | Inventory itself           |
 
 👉 **In practice:**
-✔ *Hosts file is a type of inventory file*
+✔ _Hosts file is a type of inventory file_
 
 ---
 
@@ -568,15 +568,13 @@ db1 ansible_host=10.0.0.3 ansible_user=ubuntu
 
 > **Inventory defines the infrastructure; hosts are the machines inside it.**
 
-
-
 ## Adhoc Commands and Modules
+
 1. ansible ad_servers -m ping -> (sending this module to all hosts inside ad_servers group)
 
 2. First give -> chmod 400 private_access_key
-![alt text](image-7.png)
+   ![alt text](image-7.png)
 3. don't use comments in command line of host file.
-
 
 4. ansilbe server1 -m ping
 
@@ -589,9 +587,164 @@ db1 ansible_host=10.0.0.3 ansible_user=ubuntu
 
 9. Installing httpd -> ansible server2 -a "sudo dnf install httpd -y" -> Amazon, RedHat
 
-
 10. Why apache not running? -> ansible server2 -a "sudo systemctl status httpd"
-11.  Activate -> ansible server2 -a "sudo systemctl start httpd"
+11. Activate -> ansible server2 -a "sudo systemctl start httpd"
 12. Same for the server3 as server2.
 
 13. ansible all -m ping -> pinging all servers (grouped and ungrouped also)
+
+14. Since, we saw that we have manually start the apacche server and we did a alot of manual work. So, we use the playbooks.yml to define the configuration that can be applied on all the servers.
+
+## Playbook -> Ansible
+
+1. mkdir playbooks
+2. vim install_nginx.yml
+3. become : yes -> power of root user to execute the things
+4. package is module -> that will run to do something on workers.
+
+```
+-
+    name: Install Nginx
+    hosts: ad_servers
+    become: yes
+
+    tasks:
+        - name: Install Nginx
+          package:
+            name: nginx
+            state: latest
+
+        - name: Start Nginx
+          systemd_service:
+            name: nginx
+            state: started
+
+        - name: Enable Nginx
+          systemd_service:
+            name: nginx
+            enabled: true
+
+```
+
+5. Run -> ansible-playbook playbook.yml
+
+6. On server2 and server3, port:80 is being used by the httpd -> stop to nginx to run.
+7. ansilbe server2 -a "sudo systemctl stop httpd"
+
+# Conditional Plabooks
+
+1. ansible ad_servers -m setup | grep ansible_distribution
+
+
+2. Above script doesn't work for the RedHat because by default docker is not available.
+
+```
+
+---
+- name: Install Docker on all servers
+  hosts: ad_servers
+  become: yes
+
+  tasks:
+
+    # ================= Ubuntu =================
+    - name: Install Docker on Ubuntu
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Start Docker on Ubuntu
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+      when: ansible_distribution == "Ubuntu"
+
+
+    # ================= Amazon Linux 2023 =================
+    - name: Install Docker on Amazon Linux 2023
+      dnf:
+        name: docker
+        state: present
+      when:
+        - ansible_distribution == "Amazon"
+        - ansible_distribution_major_version == "2023"
+
+    - name: Start Docker on Amazon Linux
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+      when: ansible_distribution == "Amazon"
+
+
+    # ================= RHEL 10 (FORCED DOCKER) =================
+    - name: Install dependencies on RHEL
+      dnf:
+        name:
+          - dnf-plugins-core
+          - container-selinux
+        state: present
+      when: ansible_distribution == "RedHat"
+
+    - name: Add Docker CE repo on RHEL
+      command: >
+        dnf config-manager
+        --add-repo
+        https://download.docker.com/linux/rhel/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo
+      when: ansible_distribution == "RedHat"
+
+    - name: Install Docker CE on RHEL
+      dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+      when: ansible_distribution == "RedHat"
+
+    - name: Disable SELinux (required for Docker on RHEL 10)
+      selinux:
+        state: disabled
+      when: ansible_distribution == "RedHat"
+
+    - name: Configure Docker daemon on RHEL
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "exec-opts": ["native.cgroupdriver=systemd"],
+            "storage-driver": "overlay2"
+          }
+      when: ansible_distribution == "RedHat"
+
+    - name: Enable and start Docker on RHEL
+      systemd:
+        name: docker
+        enabled: yes
+      when: ansible_distribution == "RedHat"
+
+    - name: Reboot RHEL node (required)
+      reboot:
+        reboot_timeout: 600
+      when: ansible_distribution == "RedHat"
+
+```
+
+```
+ansible ad_servers -a "docker --version" -b
+
+ansible ad_servers -a "systemctl status docker --no-pager" -b
+
+```
+
+
+![alt text](image-8.png)
+
+- pratice from <ansible-project repo> 
+
+3:05
