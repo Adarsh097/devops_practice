@@ -747,4 +747,104 @@ ansible ad_servers -a "systemctl status docker --no-pager" -b
 
 - pratice from <ansible-project repo> 
 
-3:05
+# Task-1 date.yml
+
+
+```
+-
+  name: Date playbook
+  hosts: ad_servers
+  tasks:
+    - name: This will show the date
+      command: date
+
+
+```
+
+# Task-2 install_nginx_html.yml
+
+```
+project/
+├── playbook.yml
+└── files/
+    └── index.html
+
+1. Ansible automatically checks the files/ directory
+
+
+- 
+ name: this is a  simple html project
+ hosts: servers
+ become: yes
+ tasks:
+   - name: Install nginx
+     apt:
+       name: nginx
+       state: latest
+
+   - name: Start nginx
+     service:
+       name: nginx
+       state: started
+
+   - name: Deploy webpage
+     copy: 
+       src: index.html
+       dest: /var/www/html 
+
+
+```
+
+
+## Terraform with Ansible
+
+1. Create a prod workspace
+2. Change the environment to prod in the tags to avoid conflict.
+
+```
+terraform workspace new prod
+
+terraform workspace select prod
+
+terraform init
+
+terraform apply
+```
+
+3. Now, we two environment and we have manage using ansible.
+4. On the master node:
+
+```
+1. mkdir inventories
+2. cd inventories -> touch prod dev
+3.  vim prod 
+
+----------------------------------------------
+[ad_servers]
+server1  ansible_host=13.233.149.25
+server2  ansible_host=3.109.48.30
+server3  ansible_host=13.233.214.150
+
+server1 ansible_user=ubuntu
+server2 ansible_user=ec2-user
+server3 ansible_user=ec2-user
+
+
+# common variables -> can't use hyphens in name
+
+[ad_servers:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_private_key_file=/home/ubuntu/keys/private_access_key.pem
+
+-----------------------------------------------------
+
+
+4. ansible -i prod server1 -m ping
+
+------
+5. Apply change from dev -> prod
+
+6. ansible-playbook -i ../inventories/prod install_docker.yml
+
+------ 
+```

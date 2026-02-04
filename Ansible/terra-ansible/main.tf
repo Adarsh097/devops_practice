@@ -1,8 +1,11 @@
 # key pair (login to ec2 using ssh)
 
 resource "aws_key_pair" "my_key" {
-  key_name   = "terra-key-ec2-ansible"
+  key_name   = "${var.env}terra-key-ec2-ansible"
   public_key = file("terra-key-ec2-ansible.pub")
+  tags = {
+    Environment = var.env
+  }
 }
 
 # vpc and security group
@@ -11,7 +14,7 @@ resource "aws_default_vpc" "default" {
 }
 
 resource "aws_security_group" "my_security_group" {
-  name        = "auto-sg"
+  name        = "${var.env}-auto-sg"
   description = "Security group for Terraform automation"
   vpc_id      = aws_default_vpc.default.id #interpolate vpc id
 
@@ -44,6 +47,7 @@ resource "aws_security_group" "my_security_group" {
 
   tags = {
     Name = "auto-sg"
+    Environment = var.env
   }
 }
 
