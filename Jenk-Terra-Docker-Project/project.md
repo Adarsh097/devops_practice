@@ -81,15 +81,15 @@ CMD ["npm", "run", "dev"]
 # Docker Network
 1. If container want to communicate with each other then, they need to be in the same newtwork -> bridge network (default).
 
-2. Completely isolated container -> network: <none>
-3. When the container runs on the same network as the host system -> network: <host> -> jaisa host ka port:80 | waisa container ka port:80 -> no port mapping needed
+2. Completely isolated container -> network: none
+3. When the container runs on the same network as the host system -> network: host -> jaisa host ka port:80 | waisa container ka port:80 -> no port mapping needed
 
-4. <Bridge network> -p 5173 ---- -p 5173 
-5. <user-defined bridge> -> docker network create my-net
+4. Bridge network -p 5173 ---- -p 5173 
+5. user-defined bridge -> docker network create my-net
 6. docker run --network -> to give network to container
-7. <IPVLAN> -> when container are running on different host machines.
-8. <MACVLAN> -> same as above but using the mac-address
-9. <OVERLAY> -> in docker swarm cluster
+7. IPVLAN -> when container are running on different host machines.
+8. MACVLAN -> same as above but using the mac-address
+9. OVERLAY -> in docker swarm cluster
 
 ```
 1. docker network create my-net
@@ -108,4 +108,3 @@ CMD ["npm", "run", "dev"]
 
 ```
 
-1:22
