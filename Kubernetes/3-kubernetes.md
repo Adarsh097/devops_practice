@@ -990,4 +990,309 @@ spec:
 2. kubectl apply -f vpa.yml
 3. kubectl get vpa -n online-shop-ns
 
+
 ## HELM
+Cool — let’s do **Helm** properly, but **simple and practical**, not buzzwordy 😄
+
+---
+
+## What is Helm (in one line)
+
+**Helm is the package manager for Kubernetes.**
+Just like:
+
+* `apt` → Ubuntu
+* `npm` → Node.js
+  👉 **Helm → Kubernetes**
+
+---
+
+## Why Helm exists (the real pain it solves)
+
+Without Helm, to deploy something like **NGINX / Prometheus / Grafana**, you must manage:
+
+* Deployments
+* Services
+* ConfigMaps
+* Secrets
+* Ingress
+* RBAC
+* Values per environment
+
+That’s **10–20 YAML files** 😵
+
+Helm lets you do this instead:
+
+```bash
+helm install nginx ingress-nginx/ingress-nginx
+```
+
+Boom. Done. 🚀
+
+---
+
+## Core Helm concepts (must-know)
+
+### 1️⃣ Chart
+
+A **Chart** = Kubernetes app package
+
+Contains:
+
+```
+chart/
+├── Chart.yaml        # metadata
+├── values.yaml       # config values
+└── templates/        # k8s YAML templates
+```
+
+Think:
+
+> Chart = reusable app blueprint
+
+---
+
+### 2️⃣ Release
+
+A **Release** = running instance of a chart
+
+Example:
+
+```bash
+helm install my-nginx ingress-nginx/ingress-nginx
+```
+
+* Chart → `ingress-nginx`
+* Release name → `my-nginx`
+
+You can install **same chart multiple times** with different names.
+
+---
+
+### 3️⃣ values.yaml
+
+This is where **customization** happens.
+
+Example:
+
+```yaml
+replicaCount: 2
+service:
+  type: LoadBalancer
+```
+
+Used like:
+
+```bash
+helm install nginx ingress-nginx/ingress-nginx \
+  --values values.yaml
+```
+
+---
+
+## Helm Architecture (simple)
+
+Helm v3 (current):
+
+* ❌ No Tiller (removed)
+* Helm talks **directly to Kubernetes API**
+* Uses your **kubeconfig**
+
+So if:
+
+```bash
+kubectl get nodes
+```
+
+works → Helm will work.
+
+---
+
+## Basic Helm commands (daily use)
+
+### 🔍 Check Helm version
+
+```bash
+helm version
+```
+
+---
+
+### ➕ Add a chart repository
+
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+---
+
+### 🔎 Search charts
+
+```bash
+helm search repo nginx
+```
+
+---
+
+### 📦 Install a chart
+
+```bash
+helm install my-nginx bitnami/nginx
+```
+
+---
+
+### 📃 List installed releases
+
+```bash
+helm list
+```
+
+---
+
+### 🔄 Upgrade a release
+
+```bash
+helm upgrade my-nginx bitnami/nginx
+```
+
+---
+
+### ❌ Uninstall
+
+```bash
+helm uninstall my-nginx
+```
+
+---
+
+## Helm + Kubernetes (important for your setup)
+
+Since earlier you had:
+
+```
+The connection to the server localhost:8080 was refused
+```
+
+👉 **Helm will fail too** until kubectl works.
+
+Make sure this works first:
+
+```bash
+kubectl get nodes
+```
+
+If not, set kubeconfig:
+
+```bash
+export KUBECONFIG=/etc/kubernetes/admin.conf
+```
+
+---
+
+## Real-world example (very common)
+
+### Install Prometheus + Grafana
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install monitoring prometheus-community/kube-prometheus-stack
+```
+
+That installs:
+
+* Prometheus
+* Grafana
+* Alertmanager
+* Node exporters
+
+All with **one command** 🤯
+
+---
+
+## Helm vs kubectl apply
+
+| kubectl apply       | Helm               |
+| ------------------- | ------------------ |
+| Manual YAML         | Templated YAML     |
+| Hard to rollback    | Easy rollback      |
+| No versioning       | Versioned releases |
+| No upgrade tracking | Upgrade history    |
+
+---
+
+## When you should use Helm
+
+✅ Production deployments
+✅ CI/CD (Jenkins, GitHub Actions)
+✅ Complex apps (monitoring, ingress, logging)
+❌ Simple one-off pods
+
+---
+
+## TL;DR
+
+* Helm = Kubernetes app manager
+* Chart = app template
+* Release = running app
+* `values.yaml` = customization
+* Requires working `kubectl`
+
+---
+
+
+
+1. Helm is package manager for k8s that helps to package the manifests of k8s.
+
+```
+1. mkdir helm
+2. cd helm
+
+3. Install Helm
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+
+chmod 700 get_helm.sh
+
+./get_helm.sh
+
+4. helm
+5. helm version
+
+# Making package
+
+6. helm repo list -> to add help artifactory repos(Artifact hub)
+
+```
+![alt text](image-12.png)
+2. Now, jenkins is deployed. verify pods, svc, deployments
+3. kubectl port-forward svc/jenkins-demo 8080:8080 --address=0.0.0.0
+![alt text](image-13.png)
+
+4. helm uninstall mongodb -> you must have already install form ArtifactHub
+![alt text](image-14.png)
+5. You can set the configurations from values.yml
+![alt text](image-15.png)
+![alt text](image-16.png)
+
+![alt text](image-17.png)
+
+## explore the kubestarter repo for other topics
+![alt text](image-18.png)
+![alt text](image-19.png)
+![alt text](image-20.png)
+![alt text](image-21.png)
+![alt text](image-22.png)
+![alt text](image-23.png)
+![alt text](image-24.png)
+![alt text](image-25.png)
+![alt text](image-26.png)
+![alt text](image-27.png)
+![alt text](image-28.png)
+![alt text](image-29.png)
+![alt text](image-30.png)
+![alt text](image-31.png)
+![alt text](image-32.png)
