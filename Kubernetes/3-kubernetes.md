@@ -841,6 +841,8 @@ kubectl logs pod -c container-name
 
 ## Horizontal Pod AutoScaler | HPA
 
+![alt text](image-11.png)
+
 1. We will attach HPA to the deployment -> to auto scale the number of pods as the traffic increases on a particular service.
 2. min:1 or max:10 -> configuration(HPA)
 3. This is decided on the basis of the CPU consumption by the pod. 
@@ -944,3 +946,48 @@ spec:
                   cpu: 200m
                   memory: 512Mi
 ```
+
+16. watch kubectl get pods -n online-shop-ns
+17. kubectl get hpa -n online-shop-ns
+18. Now, if the number of user increase on online-shop -> cpu > 2% -> no. of pods will autoscale.
+
+
+## VPA | Vertical Pod autoscaler
+
+1. Increasing the computing power of same pod on traffic spikes.
+
+```
+# Installing vpa
+git clone https://github.com/kubernetes/autoscaler.git
+
+cd autoscaler/vertical-pod-autoscaler
+
+# executing the vpa configurations
+./hack/vpa-up.sh
+
+#verify the pods on VPA
+kubectl get pods -n kube-system
+
+```
+# vpa.yml
+```
+kind: VerticalPodAutoscaler
+apiVersion: autoscaling.k8s.io/v1
+
+metadata:
+  name: online-shop-vpa
+  namespace: online-shop-ns
+
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: online-shop-deployment
+  updatePolicy:
+    updateMode: "Auto"  # Options: "Off", "Initial", "Auto"
+```
+
+2. kubectl apply -f vpa.yml
+3. kubectl get vpa -n online-shop-ns
+
+## HELM
